@@ -17,7 +17,11 @@ interface AuthValue {
   loading: boolean
   isAdmin: boolean
   signIn: (email: string, password: string) => Promise<void>
-  signUp: (email: string, password: string, fullName: string) => Promise<void>
+  signUp: (
+    email: string,
+    password: string,
+    datos: { nombre: string; apellidos: string; curp?: string },
+  ) => Promise<void>
   signOut: () => Promise<void>
   refreshProfile: () => Promise<void>
 }
@@ -89,11 +93,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const { error } = await supabase.auth.signInWithPassword({ email, password })
         if (error) throw error
       },
-      signUp: async (email, password, fullName) => {
+      signUp: async (email, password, datos) => {
+        const fullName = [datos.nombre, datos.apellidos]
+          .map((s) => s.trim())
+          .filter(Boolean)
+          .join(' ')
         const { error } = await supabase.auth.signUp({
           email,
           password,
-          options: { data: { full_name: fullName } },
+          options: {
+            data: {
+              full_name: fullName,
+              nombre: datos.nombre.trim(),
+              apellidos: datos.apellidos.trim(),
+              curp: datos.curp?.trim() ?? '',
+            },
+          },
         })
         if (error) throw error
       },

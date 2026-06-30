@@ -1,8 +1,9 @@
 // ============================================================================
 // Registro de "datos personales" canónicos del cliente.
-// Sirve para (1) construir el formulario de "Mi perfil" y (2) autollenar los
-// formularios dinámicos de los trámites: cada campo del trámite se compara
-// contra estos matchers y, si coincide y el perfil tiene el dato, se rellena.
+// Sirve para (1) construir el formulario de "Mi perfil" / registro y (2)
+// autollenar los formularios dinámicos de los trámites: cada campo del trámite
+// se compara contra estos matchers y, si coincide y el perfil tiene el dato,
+// se rellena. El nombre completo se deriva de nombre + apellidos.
 // ============================================================================
 
 export interface CampoPerfil {
@@ -23,11 +24,18 @@ const norm = (s: string) =>
 
 export const CAMPOS_PERFIL: CampoPerfil[] = [
   {
-    key: 'nombre_completo',
-    label: 'Nombre completo',
+    key: 'nombre',
+    label: 'Nombre(s)',
     type: 'text',
-    placeholder: 'Como aparece en tu identificación',
-    match: (l) => /nombre/.test(l),
+    placeholder: 'Tu(s) nombre(s)',
+    match: (l) => /nombre/.test(l) && !/apellido|completo/.test(l),
+  },
+  {
+    key: 'apellidos',
+    label: 'Apellidos',
+    type: 'text',
+    placeholder: 'Apellido paterno y materno',
+    match: (l) => /apellido/.test(l),
   },
   {
     key: 'curp',
@@ -68,7 +76,6 @@ export const CAMPOS_PERFIL: CampoPerfil[] = [
     label: 'Estado',
     type: 'text',
     placeholder: 'Entidad federativa',
-    // "estado" pero no "estado civil"
     match: (l) => /\bestado\b/.test(l) && !/civil/.test(l),
   },
   {
@@ -101,6 +108,16 @@ export const CAMPOS_PERFIL: CampoPerfil[] = [
   },
 ]
 
+/** Nombre completo derivado: usa nombre_completo si existe, o nombre + apellidos. */
+export function nombreCompleto(datos?: Record<string, string>): string {
+  if (!datos) return ''
+  if (datos.nombre_completo?.trim()) return datos.nombre_completo.trim()
+  return [datos.nombre, datos.apellidos]
+    .filter((s) => s?.trim())
+    .map((s) => s.trim())
+    .join(' ')
+}
+
 /**
  * Dada la lista de campos de un trámite y los datos personales guardados,
  * devuelve los valores iniciales autollenados y el set de campos rellenados.
@@ -113,11 +130,26 @@ export function autollenar(
   const autollenados = new Set<string>()
   if (!datosPersonales) return { valores, autollenados }
 
+  const completo = nombreCompleto(datosPersonales)
+
   for (const campo of campos) {
     const l = norm(campo)
-    const cp = CAMPOS_PERFIL.find((c) => c.match(l))
-    if (cp && datosPersonales[cp.key]?.trim()) {
-      valores[campo] = datosPersonales[cp.key]
+    let valor: string | undefined
+
+    if (/apellido/.test(l) && !/nombre/.test(l)) {
+      valor = datosPersonales.apellidos
+    } else if (/nombre/.test(l)) {
+      // "Nombre completo", "nombre del titular", "nombre y apellidos" → completo
+      valor = completo || datosPersonales.nombre
+    } else {
+      const cp = CAMPOS_PERFIL.find(
+        (c) => c.key !== 'nombre' && c.key !== 'apellidos' && c.match(l),
+      )
+      if (cp) valor = datosPersonales[cp.key]
+    }
+
+    if (valor?.trim()) {
+      valores[campo] = valor
       autollenados.add(campo)
     }
   }

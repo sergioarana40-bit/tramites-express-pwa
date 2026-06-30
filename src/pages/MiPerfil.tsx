@@ -6,7 +6,6 @@ import { Spinner } from '@/components/ui/Spinner'
 
 export default function MiPerfil() {
   const { user, profile, refreshProfile } = useAuth()
-  const [fullName, setFullName] = useState('')
   const [datos, setDatos] = useState<Record<string, string>>({})
   const [saving, setSaving] = useState(false)
   const [msg, setMsg] = useState<string | null>(null)
@@ -14,11 +13,17 @@ export default function MiPerfil() {
 
   useEffect(() => {
     if (!profile) return
-    setFullName(profile.full_name ?? '')
-    // Prefill correo con el email de la cuenta si aún no está capturado.
     const base = { ...(profile.datos_personales ?? {}) }
+    // Prefill correo con el email de la cuenta si aún no está capturado.
     if (!base.correo && user?.email) base.correo = user.email
-    if (!base.nombre_completo && profile.full_name) base.nombre_completo = profile.full_name
+    // Migra perfiles antiguos que solo tenían el nombre completo.
+    if (!base.nombre && !base.apellidos) {
+      const fuente = base.nombre_completo || profile.full_name || ''
+      const partes = fuente.trim().split(/\s+/)
+      if (partes[0]) base.nombre = partes[0]
+      if (partes.length > 1) base.apellidos = partes.slice(1).join(' ')
+    }
+    delete base.nombre_completo
     setDatos(base)
   }, [profile, user])
 
@@ -37,9 +42,10 @@ export default function MiPerfil() {
       const limpio = Object.fromEntries(
         Object.entries(datos).filter(([, v]) => v?.trim()),
       ) as Record<string, string>
+      const fullName = [limpio.nombre, limpio.apellidos].filter(Boolean).join(' ')
       await guardarPerfil({
         id: user.id,
-        fullName: fullName.trim() || limpio.nombre_completo || '',
+        fullName: fullName || profile?.full_name || '',
         datosPersonales: limpio,
       })
       await refreshProfile()
@@ -54,8 +60,8 @@ export default function MiPerfil() {
   return (
     <div className="mx-auto max-w-2xl space-y-5">
       <div>
-        <h1 className="text-2xl font-bold text-slate-900">Mi perfil</h1>
-        <p className="text-sm text-slate-500">
+        <h1 className="text-2xl font-semibold text-ink">Mi perfil</h1>
+        <p className="text-sm text-mut">
           Guarda tus datos una vez y se rellenarán automáticamente al solicitar un trámite.
         </p>
       </div>
@@ -63,27 +69,21 @@ export default function MiPerfil() {
       {/* Progreso de completitud */}
       <div className="card p-4">
         <div className="mb-2 flex items-center justify-between text-sm">
-          <span className="font-medium text-slate-700">Perfil completo</span>
-          <span className="text-slate-500">{llenos}/{total} datos</span>
+          <span className="font-medium text-ink2">Perfil completo</span>
+          <span className="text-mut">{llenos}/{total} datos</span>
         </div>
-        <div className="h-2 overflow-hidden rounded-full bg-slate-100">
+        <div className="h-2 overflow-hidden rounded-full bg-line/60">
           <div className="h-full rounded-full bg-brand-500 transition-all" style={{ width: `${pct}%` }} />
         </div>
       </div>
 
       <div className="card space-y-4 p-6">
-        <div>
-          <label className="mb-1 block text-sm font-medium text-slate-700">Nombre para mostrar</label>
-          <input value={fullName} onChange={(e) => setFullName(e.target.value)} className="input-field" placeholder="Tu nombre" />
-        </div>
-
-        <hr className="border-slate-100" />
-        <p className="text-sm font-semibold text-slate-700">Datos para tus trámites</p>
+        <p className="text-sm font-semibold text-ink">Datos para tus trámites</p>
 
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           {CAMPOS_PERFIL.map((c) => (
             <div key={c.key}>
-              <label className="mb-1 block text-sm font-medium text-slate-700">{c.label}</label>
+              <label className="mb-1 block text-sm font-medium text-ink2">{c.label}</label>
               <input
                 type={c.type}
                 value={datos[c.key] ?? ''}
@@ -109,7 +109,7 @@ export default function MiPerfil() {
         </div>
       </div>
 
-      <p className="text-xs text-slate-400">
+      <p className="text-xs text-mut">
         🔒 Estos datos son privados (solo tú y el gestor que procesa tu trámite pueden verlos). No
         guardes aquí contraseñas de portales; esas se piden por trámite cuando aplica.
       </p>
