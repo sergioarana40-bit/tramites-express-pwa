@@ -46,6 +46,17 @@ export interface Solicitud {
   updated_at: string
 }
 
+export interface Notificacion {
+  id: string
+  user_id: string
+  solicitud_id: string | null
+  tipo: string
+  titulo: string
+  mensaje: string
+  leida: boolean
+  created_at: string
+}
+
 export interface Archivo {
   id: string
   solicitud_id: string

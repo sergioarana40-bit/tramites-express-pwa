@@ -8,6 +8,7 @@ import type {
   EstadoSolicitud,
   Profile,
   TipoPrecio,
+  Notificacion,
 } from './types'
 
 // ---------------------------------------------------------------------------
@@ -218,6 +219,35 @@ export async function actualizarTipoPrecio(id: string, tipo: TipoPrecio): Promis
 // ---------------------------------------------------------------------------
 // Perfil del cliente (datos personales reutilizables)
 // ---------------------------------------------------------------------------
+
+// ---------------------------------------------------------------------------
+// Notificaciones
+// ---------------------------------------------------------------------------
+
+export async function getNotificaciones(userId: string, limite = 30): Promise<Notificacion[]> {
+  const { data, error } = await supabase
+    .from('notificaciones')
+    .select('*')
+    .eq('user_id', userId)
+    .order('created_at', { ascending: false })
+    .limit(limite)
+  if (error) throw error
+  return data as Notificacion[]
+}
+
+export async function marcarLeida(id: string): Promise<void> {
+  const { error } = await supabase.from('notificaciones').update({ leida: true }).eq('id', id)
+  if (error) throw error
+}
+
+export async function marcarTodasLeidas(userId: string): Promise<void> {
+  const { error } = await supabase
+    .from('notificaciones')
+    .update({ leida: true })
+    .eq('user_id', userId)
+    .eq('leida', false)
+  if (error) throw error
+}
 
 export async function guardarPerfil(input: {
   id: string

@@ -2,6 +2,7 @@ import { NavLink, Outlet, useNavigate } from 'react-router-dom'
 import type { ReactNode } from 'react'
 import { useAuth } from '@/context/AuthContext'
 import { InstallPWA } from '@/components/InstallPWA'
+import { NotificacionesBell } from '@/components/NotificacionesBell'
 
 interface NavItem {
   to: string
@@ -106,6 +107,7 @@ export default function AppLayout() {
             <div className="hidden sm:block">
               <InstallPWA compact />
             </div>
+            <NotificacionesBell />
             {/* Pill de rol / tipo de precio */}
             <span className="hidden items-center gap-1.5 rounded-full bg-accent-soft px-3 py-1.5 text-[11px] font-bold capitalize text-accent-ink sm:inline-flex">
               <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#b5852a" strokeWidth="2.2">
