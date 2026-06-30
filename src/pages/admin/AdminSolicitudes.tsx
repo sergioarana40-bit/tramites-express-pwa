@@ -30,7 +30,10 @@ export default function AdminSolicitudes() {
     return rows.filter((r) => {
       const mEstado = estado === 'todos' || r.estado === estado
       const mCat = categoria === 'todas' || r.tramite?.categoria === categoria
-      const mCli = !term || (r.profile?.full_name ?? '').toLowerCase().includes(term)
+      const mCli =
+        !term ||
+        (r.profile?.full_name ?? '').toLowerCase().includes(term) ||
+        (r.profile?.datos_personales?.correo ?? '').toLowerCase().includes(term)
       return mEstado && mCat && mCli
     })
   }, [rows, estado, categoria, cliente])
@@ -87,7 +90,9 @@ export default function AdminSolicitudes() {
                 >
                   <div className="col-span-2 md:col-span-3">
                     <p className="font-medium text-slate-800">{r.profile?.full_name ?? '—'}</p>
-                    <p className="text-xs capitalize text-slate-400">{r.profile?.tipo_precio}</p>
+                    <p className="truncate text-xs text-slate-400">
+                      {r.profile?.datos_personales?.correo ?? r.profile?.tipo_precio}
+                    </p>
                   </div>
                   <div className="col-span-2 md:col-span-4">
                     <p className="text-slate-700">{r.tramite?.nombre}</p>

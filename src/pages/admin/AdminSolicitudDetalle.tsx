@@ -12,6 +12,7 @@ import { formatMXN, formatFechaHora } from '@/lib/format'
 import { PageLoader, Spinner } from '@/components/ui/Spinner'
 import { EstadoBadge } from '@/components/ui/EstadoBadge'
 import { FileUpload } from '@/components/FileUpload'
+import { CAMPOS_PERFIL, nombreCompleto } from '@/lib/perfilCampos'
 import { ESTADO_LABEL, type EstadoSolicitud, type SolicitudCompleta } from '@/lib/types'
 
 export default function AdminSolicitudDetalle() {
@@ -147,9 +148,43 @@ export default function AdminSolicitudDetalle() {
         </p>
       )}
 
+      {/* Datos del cliente (de su perfil) */}
+      <div className="card p-6">
+        <div className="mb-3 flex items-center justify-between">
+          <h2 className="font-semibold text-ink">Datos del cliente</h2>
+          <span className="text-[11px] text-mut">de su perfil</span>
+        </div>
+        {(() => {
+          const datos = sol.profile?.datos_personales ?? {}
+          const nombre = nombreCompleto(datos) || sol.profile?.full_name
+          const visibles = CAMPOS_PERFIL.filter(
+            (c) => c.key !== 'nombre' && c.key !== 'apellidos' && datos[c.key]?.trim(),
+          )
+          return (
+            <dl className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+              <div className="rounded-lg bg-paper/60 px-3 py-2">
+                <dt className="text-[11px] text-mut">Nombre completo</dt>
+                <dd className="text-sm text-ink">{nombre || 'Sin capturar'}</dd>
+              </div>
+              {visibles.map((c) => (
+                <div key={c.key} className="rounded-lg bg-paper/60 px-3 py-2">
+                  <dt className="text-[11px] text-mut">{c.label}</dt>
+                  <dd className="break-words text-sm text-ink">{datos[c.key]}</dd>
+                </div>
+              ))}
+              {visibles.length === 0 && (
+                <p className="text-sm text-mut sm:col-span-2">
+                  El cliente aún no completó su perfil.
+                </p>
+              )}
+            </dl>
+          )
+        })()}
+      </div>
+
       {/* Datos capturados */}
       <div className="card p-6">
-        <h2 className="mb-3 font-semibold text-slate-900">Datos capturados por el cliente</h2>
+        <h2 className="mb-3 font-semibold text-slate-900">Datos capturados en este trámite</h2>
         <dl className="grid grid-cols-1 gap-2 sm:grid-cols-2">
           {Object.entries(sol.datos_capturados).map(([k, v]) => (
             <div key={k} className="rounded-lg bg-slate-50 px-3 py-2">
