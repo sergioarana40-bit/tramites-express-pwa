@@ -42,29 +42,41 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [profile, setProfile] = useState<Profile | null>(null)
   const [loading, setLoading] = useState(true)
 
+  // Suscripción al estado de auth. IMPORTANTE: el callback NO debe usar `await`
+  // de otras llamadas a Supabase: corre dentro de un lock interno y haría
+  // deadlock (la app se quedaba en "Cargando…" hasta refrescar). Solo
+  // actualizamos la sesión de forma síncrona; el perfil se carga en otro efecto.
   useEffect(() => {
-    let active = true
-
-    supabase.auth.getSession().then(async ({ data }) => {
-      if (!active) return
+    supabase.auth.getSession().then(({ data }) => {
       setSession(data.session)
-      if (data.session?.user) {
-        setProfile(await fetchProfile(data.session.user.id))
-      }
+      if (!data.session) setLoading(false)
+    })
+
+    const { data: sub } = supabase.auth.onAuthStateChange((_event, newSession) => {
+      setSession(newSession)
+      if (!newSession) setLoading(false)
+    })
+
+    return () => sub.subscription.unsubscribe()
+  }, [])
+
+  // Carga del perfil cuando cambia el usuario (fuera del lock de auth).
+  useEffect(() => {
+    const uid = session?.user?.id
+    if (!uid) {
+      setProfile(null)
+      return
+    }
+    let active = true
+    fetchProfile(uid).then((p) => {
+      if (!active) return
+      setProfile(p)
       setLoading(false)
     })
-
-    const { data: sub } = supabase.auth.onAuthStateChange(async (_event, newSession) => {
-      if (!active) return
-      setSession(newSession)
-      setProfile(newSession?.user ? await fetchProfile(newSession.user.id) : null)
-    })
-
     return () => {
       active = false
-      sub.subscription.unsubscribe()
     }
-  }, [])
+  }, [session?.user?.id])
 
   const value = useMemo<AuthValue>(
     () => ({
