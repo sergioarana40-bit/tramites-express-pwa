@@ -159,9 +159,16 @@ export default function TramiteDetalle() {
       </Link>
 
       <div className="card p-6">
-        <span className="text-xs font-medium uppercase tracking-wide text-brand-600">
-          {tramite.categoria}
-        </span>
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="text-xs font-medium uppercase tracking-wide text-brand-600">
+            {tramite.categoria}
+          </span>
+          {tramite.ambito && (
+            <span className="rounded-full bg-paper px-2 py-0.5 text-[11px] font-semibold text-ink2">
+              {tramite.ambito}
+            </span>
+          )}
+        </div>
         <h1 className="mt-1 text-2xl font-bold text-slate-900">{tramite.nombre}</h1>
         {tramite.descripcion && <p className="mt-2 text-sm text-slate-600">{tramite.descripcion}</p>}
         <div className="mt-4 flex items-baseline gap-2">
@@ -175,6 +182,17 @@ export default function TramiteDetalle() {
         <h2 className="mb-3 flex items-center gap-2 font-semibold text-slate-900">
           📋 Qué necesitas para este trámite
         </h2>
+
+        {/* Requisitos previos reales (lo que debes cumplir antes de empezar) */}
+        {tramite.prerequisitos_reales && (
+          <div className="mb-4 rounded-xl border border-line bg-white p-3.5">
+            <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-mut">
+              Requisitos previos
+            </p>
+            <p className="text-sm leading-relaxed text-ink2">{tramite.prerequisitos_reales}</p>
+          </div>
+        )}
+
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <div>
             <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-slate-500">
@@ -216,6 +234,19 @@ export default function TramiteDetalle() {
             )}
           </div>
         </div>
+
+        {/* Aviso de credenciales sensibles */}
+        {/^(s[ií]|parcial)/i.test(tramite.requiere_credenciales_cliente) && (
+          <div className="mt-4 flex items-start gap-2.5 rounded-xl bg-amber-50 px-3 py-2.5 text-xs text-amber-900">
+            <svg className="mt-0.5 h-4 w-4 flex-none text-amber-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <rect x="4" y="11" width="16" height="10" rx="2" /><path d="M8 11V7a4 4 0 0 1 8 0v4" />
+            </svg>
+            <p>
+              Este trámite usa <b className="font-semibold">tus credenciales</b> ({tramite.requiere_credenciales_cliente.replace(/\s*-\s*NO almacenar.*/i, '')}).
+              Por seguridad <b className="font-semibold">no las almacenamos</b>: se usan solo en vivo al procesarlo.
+            </p>
+          </div>
+        )}
 
         {/* Aviso de autollenado / sugerencia de completar perfil */}
         {autollenados.size > 0 ? (

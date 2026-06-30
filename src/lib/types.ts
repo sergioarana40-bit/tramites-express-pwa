@@ -27,6 +27,13 @@ export interface Tramite {
   descripcion: string | null
   datos_requeridos: string
   documentos_requeridos: string
+  prerequisitos_reales: string
+  ambito: string
+  nivel_automatizacion: string
+  que_se_automatiza: string
+  que_queda_manual: string
+  validaciones_requeridas: string
+  requiere_credenciales_cliente: string
   precio_publico: number
   precio_mayorista: number
   activo: boolean

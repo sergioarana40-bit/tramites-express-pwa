@@ -216,6 +216,44 @@ export default function AdminSolicitudDetalle() {
         )}
       </div>
 
+      {/* Guía de procesamiento (del catálogo) */}
+      {sol.tramite && (sol.tramite.validaciones_requeridas || sol.tramite.prerequisitos_reales) && (
+        <div className="card border-brand-100 bg-brand-50/40 p-6">
+          <div className="mb-3 flex flex-wrap items-center gap-2">
+            <h2 className="font-semibold text-ink">Guía de procesamiento</h2>
+            {sol.tramite.nivel_automatizacion && (
+              <span className="rounded-full bg-white px-2 py-0.5 text-[11px] font-semibold text-ink2">
+                {sol.tramite.nivel_automatizacion}
+              </span>
+            )}
+            {sol.tramite.ambito && (
+              <span className="rounded-full bg-white px-2 py-0.5 text-[11px] font-semibold text-ink2">
+                {sol.tramite.ambito}
+              </span>
+            )}
+          </div>
+          <div className="space-y-3 text-sm">
+            {sol.tramite.prerequisitos_reales && (
+              <Bloque titulo="Prerrequisitos" texto={sol.tramite.prerequisitos_reales} />
+            )}
+            {sol.tramite.validaciones_requeridas && (
+              <Bloque titulo="Validaciones a confirmar" texto={sol.tramite.validaciones_requeridas} />
+            )}
+            {sol.tramite.que_se_automatiza && (
+              <Bloque titulo="Qué se automatiza" texto={sol.tramite.que_se_automatiza} />
+            )}
+            {sol.tramite.que_queda_manual && (
+              <Bloque titulo="Qué queda manual" texto={sol.tramite.que_queda_manual} />
+            )}
+            {/^(s[ií]|parcial)/i.test(sol.tramite.requiere_credenciales_cliente) && (
+              <p className="rounded-lg bg-amber-50 px-3 py-2 text-xs text-amber-900">
+                🔒 Requiere credenciales del cliente: {sol.tramite.requiere_credenciales_cliente}
+              </p>
+            )}
+          </div>
+        </div>
+      )}
+
       {/* Gestión: estado + notas */}
       <div className="card p-6">
         <h2 className="mb-3 font-semibold text-slate-900">Gestión</h2>
@@ -270,6 +308,15 @@ export default function AdminSolicitudDetalle() {
           {subiendo ? <Spinner className="h-4 w-4 border-white/40 border-t-white" /> : 'Subir resultado'}
         </button>
       </div>
+    </div>
+  )
+}
+
+function Bloque({ titulo, texto }: { titulo: string; texto: string }) {
+  return (
+    <div className="rounded-xl border border-line bg-white p-3">
+      <p className="mb-0.5 text-[11px] font-semibold uppercase tracking-wide text-mut">{titulo}</p>
+      <p className="leading-relaxed text-ink2">{texto}</p>
     </div>
   )
 }
